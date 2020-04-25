@@ -6,9 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 
-void main() => runApp(
-      MyApp(),
-    );
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   @override
@@ -34,10 +32,12 @@ class _MyHomePageState extends State<MyHomePage> {
   Future pickImage() async {
     File tempStore = await ImagePicker.pickImage(source: ImageSource.gallery);
     if (tempStore != null) {
-      setState(() {
-        pickedImage = tempStore;
-        isImageLoaded = true;
-      });
+      setState(
+        () {
+          pickedImage = tempStore;
+          isImageLoaded = true;
+        },
+      );
     }
   }
 
@@ -57,9 +57,8 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         }
       }
-      setState(() {
-        data = _data;
-      });
+      setState(() => data = _data);
+
       Scaffold.of(context).showSnackBar(
         SnackBar(
           duration: Duration(milliseconds: 500),
@@ -69,7 +68,6 @@ class _MyHomePageState extends State<MyHomePage> {
     } catch (e) {
       showCupertinoDialog(
         context: context,
-        // barrierDismissible: false,
         builder: (context) => CupertinoAlertDialog(
           title: Text(
             'Error',
@@ -98,7 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
           actions: <Widget>[
             CupertinoButton(
               child: Text('Ok'),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.pop(context),
             )
           ],
         ),
