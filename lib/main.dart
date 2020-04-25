@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -40,22 +41,71 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<void> readText() async {
-    FirebaseVisionImage ourImage = FirebaseVisionImage.fromFile(pickedImage);
-    TextRecognizer recognizeText = FirebaseVision.instance.textRecognizer();
-    VisionText readText = await recognizeText.processImage(ourImage);
-    String _data = '';
-    for (TextBlock block in readText.blocks) {
-      for (TextLine line in block.lines) {
-        for (TextElement word in line.elements) {
-          print(word.text);
-          _data = _data + ' ' + word.text;
+  Future<void> readText(BuildContext context) async {
+    TextRecognizer textRecognizer;
+    try {
+      final FirebaseVisionImage ourImage =
+          FirebaseVisionImage.fromFile(pickedImage);
+      textRecognizer = FirebaseVision.instance.textRecognizer();
+      final VisionText readText = await textRecognizer.processImage(ourImage);
+      String _data = '';
+      for (TextBlock block in readText.blocks) {
+        for (TextLine line in block.lines) {
+          for (TextElement word in line.elements) {
+            print(word.text);
+            _data = _data + ' ' + word.text;
+          }
         }
       }
+      setState(() {
+        data = _data;
+      });
+      Scaffold.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(milliseconds: 500),
+          content: Text('Click on Text to Copy'),
+        ),
+      );
+    } catch (e) {
+      showCupertinoDialog(
+        context: context,
+        // barrierDismissible: false,
+        builder: (context) => CupertinoAlertDialog(
+          title: Text(
+            'Error',
+            style: Theme.of(context).textTheme.headline,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              SizedBox(
+                height: 12,
+              ),
+              Icon(
+                Icons.error,
+                color: Colors.red,
+                size: 50,
+              ),
+              SizedBox(
+                height: 12,
+              ),
+              Text(
+                e.toString(),
+                style: Theme.of(context).textTheme.body1,
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            CupertinoButton(
+              child: Text('Ok'),
+              onPressed: () => Navigator.of(context).pop(),
+            )
+          ],
+        ),
+      );
+    } finally {
+      textRecognizer.close();
     }
-    setState(() {
-      data = _data;
-    });
   }
 
   @override
@@ -67,6 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
     super.dispose();
   }
 
@@ -127,7 +178,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         color: Colors.teal,
                         child: Text(
                           'Read Text',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
                         ),
                         onPressed: () async {
                           if (pickedImage == null) {
@@ -139,13 +192,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             );
                             return;
                           }
-                          await readText();
-                          Scaffold.of(context).showSnackBar(
-                            SnackBar(
-                              duration: Duration(milliseconds: 500),
-                              content: Text('Click on Text to Copy'),
-                            ),
-                          );
+                          await readText(context);
                         },
                       ),
                     ),
@@ -161,7 +208,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             child: Builder(
                               builder: (context) => SelectableText(
                                 '$data',
-                                style: Theme.of(context).textTheme.body1,
+                                style: Theme.of(context).textTheme.display1,
                                 onTap: () {
                                   Clipboard.setData(ClipboardData(text: data));
                                   HapticFeedback.heavyImpact();
